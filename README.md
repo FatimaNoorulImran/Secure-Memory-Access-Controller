@@ -53,10 +53,84 @@ graph TD
     ACU --->|Assert Pass| Mem[("💾 Main Memory Target")]
     ACU --->|Assert Fault| FL["Fault Logger (Clocked)"]
     FL --->|raise_irq / fault_address| Src
-⚡ Key FeaturesMulti-Tier Privilege Enforcements: Evaluates structural modes mapping across explicit operational states (User, Supervisor, and Kernel).Execute-Never (XN) Isolation: Blocks code execution routines originating from designated data storage regions, preventing runtime exploit injections regardless of write flags.Deterministic Fault Capturing: Synchronously locks down target addresses associated with unauthorized operations via a dedicated sequential Fault Logger unit.Latch-Free Synthesis: Utilizes strict, production-standard synthesizable coding disciplines including default assignments to prevent hazardous combinational latches.📦 Functional Modules1. Privilege Decoder (Combinational)Translates execution run-modes from the external requester master into an internal, multi-bit normalized privilege matrix utilized for quick logical comparisons.2. Region Decoder (Combinational)Decodes the active memory addresses to extract specific destination scopes, verifying required clearance baselines and explicit read/write/execute permission attributes.3. Access Control Unit (Combinational)The functional security core of the system. Evaluates the incoming privilege profile against target spatial limits and asserts a single-cycle mem_enable flag or activates access_fault flags.4. Fault Logger (Sequential - 100MHz)A clocked registrar system handling synchronous capture frames. Captures and flags violation metrics (last_fault_addr, fault_valid) to trigger processor interrupts for auditing.⚙️ Access Control LogicThe evaluation vector uses the following protection logic:Delphiif privilege < required_mode then
+
+```
+
+---
+
+## ⚡ Key Features
+
+* **Multi-Tier Privilege Enforcements:** Evaluates structural modes mapping across explicit operational states (`User`, `Supervisor`, and `Kernel`).
+* **Execute-Never (XN) Isolation:** Blocks code execution routines originating from designated data storage regions, preventing runtime exploit injections regardless of write flags.
+* **Deterministic Fault Capturing:** Synchronously locks down target addresses associated with unauthorized operations via a dedicated sequential Fault Logger unit.
+* **Latch-Free Synthesis:** Utilizes strict, production-standard synthesizable coding disciplines including default assignments to prevent hazardous combinational latches.
+
+---
+
+## 📦 Functional Modules
+
+### 1. Privilege Decoder (Combinational)
+
+Translates execution run-modes from the external requester master into an internal, multi-bit normalized privilege matrix utilized for quick logical comparisons.
+
+### 2. Region Decoder (Combinational)
+
+Decodes the active memory addresses to extract specific destination scopes, verifying required clearance baselines and explicit read/write/execute permission attributes.
+
+### 3. Access Control Unit (Combinational)
+
+The functional security core of the system. Evaluates the incoming privilege profile against target spatial limits and asserts a single-cycle `mem_enable` flag or activates `access_fault` flags.
+
+### 4. Fault Logger (Sequential - 100MHz)
+
+A clocked registrar system handling synchronous capture frames. Captures and flags violation metrics (`last_fault_addr`, `fault_valid`) to trigger processor interrupts for auditing.
+
+---
+
+## ⚙️ Access Control Logic
+
+The evaluation vector uses the following protection logic loop:
+
+```pascal
+if privilege < required_mode then
     raise_fault();
 else if execution_requested and (not allow_execute) then
     raise_fault();
 else
     grant_memory_access();
-🧪 Simulation & VerificationValidation matrices were executed via testbench scenarios within ModelSim, targeting explicit execution permission bounds:Test CasePrivilege LevelRequested AddressIntended AccessObserved ResultTC1USER (00)0x1000ExecuteAllow (Valid Code Region)TC2USER (00)0x3000ExecuteFault (Blocked Data Space)TC3SUPERVISOR (01)0x5000ExecuteFault (No OS Execution Allowed)TC4KERNEL (10)0x7000ExecuteAllow (Full System Range Clearance)Functional Waveform BehaviorCombinational Flow: Verification confirms that permission assessments clear or trip instantly upon transaction setups.Sequential Integrity: Fault metrics lock strictly on the following positive edge of the system clock (clk), guaranteeing data trace reliability for subsequent host interrupt routines.🚀 Future EnhancementsDynamic Range Registers: Integrate runtime software-programmable registers enabling modern operating systems to redefine allocation protections dynamically.IOMMU Peripheral Tracking: Expand device-ID metadata decoding vectors to enforce isolated device tracking profiles across multiple hardware peripherals.Page-Level Sub-granular Granularity: Scale current region-level protection layouts down to fine-grained virtual memory paging structures.Developed for academic research and validation in advanced Computer Architecture principles.
+
+```
+
+---
+
+## 🧪 Simulation & Verification
+
+Validation matrices were executed via testbench scenarios within **ModelSim**, targeting explicit execution permission bounds:
+
+| Test Case | Privilege Level | Requested Address | Intended Access | Observed Result |
+| --- | --- | --- | --- | --- |
+| **TC1** | USER (00) | `0x1000` | Execute | **Allow** (Valid Code Region) |
+| **TC2** | USER (00) | `0x3000` | Execute | **Fault** (Blocked Data Space) |
+| **TC3** | SUPERVISOR (01) | `0x5000` | Execute | **Fault** (No OS Execution Allowed) |
+| **TC4** | KERNEL (10) | `0x7000` | Execute | **Allow** (Full System Range Clearance) |
+
+### Functional Waveform Behavior
+
+* **Combinational Flow:** Verification confirms that permission assessments clear or trip instantly upon transaction setups.
+* **Sequential Integrity:** Fault metrics lock strictly on the following positive edge of the system clock (`clk`), guaranteeing data trace reliability for subsequent host interrupt routines.
+
+---
+
+## 🚀 Future Enhancements
+
+* **Dynamic Range Registers:** Integrate runtime software-programmable registers enabling modern operating systems to redefine allocation protections dynamically.
+* **IOMMU Peripheral Tracking:** Expand device-ID metadata decoding vectors to enforce isolated device tracking profiles across multiple hardware peripherals.
+* **Page-Level Sub-granular Granularity:** Scale current region-level protection layouts down to fine-grained virtual memory paging structures.
+
+---
+
+*Developed for academic research and validation in advanced Computer Architecture principles.*
+
+```
+
+```
