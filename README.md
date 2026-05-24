@@ -130,7 +130,3 @@ Validation matrices were executed via testbench scenarios within **ModelSim**, t
 ---
 
 *Developed for academic research and validation in advanced Computer Architecture principles.*
-
-```
-
-```
